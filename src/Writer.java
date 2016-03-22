@@ -26,9 +26,16 @@ BufferedWriter bw=null;
                 bw.write(" ");
             } else if (content.equals("Backspace")) {
                 bw.write("~");
+            } else if (content.equals("Slash")) {
+                bw.write("/");
+            } else if (content.equals("Period")) {
+                bw.write(".");
+            } else if (content.equals("Comma")) {
+                bw.write(",");
             } else {
                 bw.write(content);
             }
+
             bw.flush();
             bw.close();
 

@@ -17,4 +17,5 @@ public class Reader {
         }
         return parsedString;
     }
+
 }

