@@ -77,21 +77,24 @@ class KaggleDB:
         %s
         """%(self.schema_name, tableName , sqlRaw), False)
             
-    def createSchema(self, trainTbl, testTbl):
+    def createSchema(self, tableName, dataTbl):
         existsSql = """ select count(*) from information_schema.schemata where schema_name = '%s' """%self.schema_name.lower()
         res = self.__executeSql(existsSql)
         if res[0][0] == 1:
-            return
+            print 'Schema already exists!'
+        else:
+            print 'Creating Schema'
+            self.__executeSql(""" 
+            CREATE SCHEMA %s
+            """%self.schema_name, False)
 
-        print 'Creating Schema'
-        self.__executeSql(""" 
-        CREATE SCHEMA %s
-        """%self.schema_name, False)
+        cols = self.getTableFields(tableName)
+        if len(cols) == 0:
+            self.__createTable(tableName, dataTbl)
+        else:
+            print 'Table Already exists'
         
-        self.__createTable('TrainData', trainTbl)
-        self.__createTable('TestData', testTbl)
-        
-    def getTableFields(self, tbl_name = 'eeg_subjects'): 
+    def getTableFields(self, tbl_name): 
         fields = list()
         if (self.__conn == None):
             raise NameError('Connection already closed')

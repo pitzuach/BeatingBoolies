@@ -9,8 +9,7 @@ class DataLoader:
         self.cfg = Configuration()
         self.__initLogging()
         self.__db = None
-        self.__trainDataH = None
-        self.__testDataH = None
+        self.__dataH = None
         
     def __initLogging(self):
         if not(os.path.exists('log')):
@@ -106,22 +105,18 @@ class DataLoader:
 
     def initDB(self):
         self.__db = KaggleDB(self.cfg.schema_name)
-        alreadyExists = self.__db.checkSchema()
         
-        print 'Analyzing Train...'
-        self.__trainDataH = self.__prepareDataType(self.cfg.trainDir, self.cfg.filesFormatFuncTrain, self.cfg.trainAnalyzerFun)
-        print 'Analyzing Test...'
-        self.__testDataH = self.__prepareDataType(self.cfg.testDir, self.cfg.filesFormatFuncTest, self.cfg.testAnalyzerFun)
-
-        if alreadyExists:
-            print 'DB Already Exists'
-            return
+        print 'Analyzing Data...'
+        self.__dataH = self.__prepareDataType(self.cfg.dataDir, self.cfg.filesFormatFunc, self.cfg.dataAnalyzerFun)
         
         print 'Createing Schema'
-        self.__db.createSchema(self.__trainDataH, self.__testDataH)
+        self.__db.createSchema(self.cfg.tableName , self.__dataH)
         print 'Finished!'
 
-    def __loadData(self, fpath, dbFunc, fieldTypes, analyzeFun):
+    def __loadDataFile(self, fpath, fieldTypes):
+        dbFunc = lambda x, transFunc: self.__db.loadData(self.cfg.tableName , x, transFunc)
+        analyzeFun = self.cfg.dataAnalyzerFun
+        
         if not(os.path.exists(fpath)):
             raise NameError('Path not exist')
         allDone = self.__getAllDone()
@@ -141,14 +136,6 @@ class DataLoader:
         else:
             print 'Error, please see logs...'
 
-    def __loadTrainData(self, fpath, fieldTypes):
-        dbFunc = lambda x, transFunc: self.__db.loadData('TrainData', x, transFunc)
-        self.__loadData(fpath, dbFunc, fieldTypes, self.cfg.trainAnalyzerFun)
-
-    def __loadTestData(self, fpath, fieldTypes):
-        dbFunc = lambda x, transFunc: self.__db.loadData('TestData', x, transFunc)
-        self.__loadData(fpath, dbFunc, fieldTypes, self.cfg.testAnalyzerFun)
-
     def __recursiveList(self, fDir):
         allFiles = os.listdir(fDir)
         allFiles = map(lambda f: os.path.join(fDir, f), allFiles)
@@ -158,7 +145,11 @@ class DataLoader:
                 allFiles.extend(sonsFiles)
         return allFiles
 
-    def __loadAllData(self, fDir, filtF, func):
+    def loadAllData(self):
+        func = lambda x: self.__loadDataFile(x, self.__dataH)
+        filtF = self.cfg.filesFormatFunc
+        fDir = self.cfg.dataDir
+        
         if not(os.path.exists(fDir)):
             raise NameError('Path not exist')
         allFiles = self.__recursiveList(fDir)
@@ -166,14 +157,6 @@ class DataLoader:
         for fil in allFiles:
             fullPath = os.path.join(fDir, fil)
             func(fullPath)
-
-    def loadAllTrain(self):
-        func = lambda x: self.__loadTrainData(x, self.__trainDataH)
-        self.__loadAllData(self.cfg.trainDir , self.cfg.filesFormatFuncTrain, func)
-
-    def loadAllTest(self):
-        func = lambda x: self.__loadTestData(x, self.__testDataH)
-        self.__loadAllData(self.cfg.testDir, self.cfg.filesFormatFuncTest, func)
 
     def close(self):
         if self.__db <> None:
@@ -183,9 +166,7 @@ class DataLoader:
 if __name__ == '__main__':
     dl = DataLoader()
     dl.initDB()
-
-    dl.loadAllTrain()
-    dl.loadAllTest()
+    dl.loadAllData()
 
     dl.close()
 

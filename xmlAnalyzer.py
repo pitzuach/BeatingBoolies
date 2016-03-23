@@ -49,5 +49,5 @@ def parseXml(fPath):
                 raise
             postData[colName] = colVal
         posts.append(postData)
-        return posts, posts[0].keys()
+    return posts, posts[0].keys()
         
