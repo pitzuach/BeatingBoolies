@@ -3,17 +3,31 @@ import org.jnativehook.*;
 import org.jnativehook.keyboard.NativeKeyListener;
 import org.jnativehook.mouse.NativeMouseListener;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 /**
  * Created by Matan on 3/22/16.d
  */
 public class main {
     public static void main(String  args[])  {
-        KS k = new KS();
+        KS kk = new KS();
+
+        String Tocheck = "asdvasgd s hdvasjhd shdvahsdvhasvdjas d ajshdajhsvdjhasd sajhd hjas d";
+        int iterator = 0;
+        while (iterator < Tocheck.length()) {
+            kk.handleKey(String.valueOf(Tocheck.charAt(iterator)));
+            iterator++;
+
+        }
+        ConcurrentLinkedQueue<String> s = kk.sniffs;
+
+
         try{
             //GlobalScreen.removeNativeMouseListener();
+
             GlobalScreen.registerNativeHook();
-            GlobalScreen.addNativeKeyListener(k);
+            GlobalScreen.addNativeKeyListener(kk);
             //GlobalScreen.removeNativeMouseListener(NajkjjjtiveMouseListener.class);
         }
 

