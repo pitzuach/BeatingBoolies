@@ -12,21 +12,22 @@ def fetchData():
     conn.close()
     return res
 
-def tryDictionary():
+def tryDictionary(useBig = True):
     data = fetchData()
     data2 = map(lambda x: [ re.findall("[\w']+", x[0]) , x[1] ] , data)
     
     data3 = list(data2)
-    """
-    for k in xrange(len(data2)):
-        wordList = data2[k][0]
-        cpW = list(wordList)
-        if len(wordList) > 1:
-            for i in xrange(len(wordList)-1):
-                bigram = wordList[i] + ' ' + wordList[i+1]
-                cpW.append(bigram)
-        data3[k][0] = cpW
-    """
+    
+    if useBig:
+        for k in xrange(len(data2)):
+            wordList = data2[k][0]
+            cpW = list(wordList)
+            if len(wordList) > 1:
+                for i in xrange(len(wordList)-1):
+                    bigram = wordList[i] + ' ' + wordList[i+1]
+                    cpW.append(bigram)
+            data3[k][0] = cpW
+    
     
     wordDict = dict()
     bullyDict = dict()
@@ -71,53 +72,68 @@ def tryDictionary():
             falseDict[word] = falseDict[word] + 1
     return bullyDict, falseDict, wordDict, data3
 
-def analyzeDict():
-    bullyDict, falseDict, wordDict, data = tryDictionary()
+def analyzeDict(useBig = True):
+    bullyDict, falseDict, wordDict, data = tryDictionary(useBig)
     model = dict()
-    tot = sum(map(lambda x:x[1], bullyDict.iteritems()))
-    #print tot
+    allW = filter(lambda x : len(x[0].split(' '))==1 , bullyDict.iteritems())
+    allW = map(lambda x:x[1], allW)
+    
+    tot = sum(allW)
+    print 'Total Sum =%d'%tot
     for word,cnt in bullyDict.iteritems():
         #scoreDic[word] = float(cnt) / wordDict[word]
         #wc = 0
         #if falseDict.has_key(word):
         #    wc = falseDict[word]
-        model[word] = float(cnt) / tot
+        ww = word.split(' ')
+        if len(ww) == 1:
+            model[word] = float(cnt) / tot
+        elif len(ww) == 2:
+            if useBig:
+                model[word] = float(cnt) / bullyDict[ww[0]]
+        else:
+            raise NameError('Unsupprted')
     #res = sorted(model.iteritems(), key = lambda x : -x[1])
     return data, bullyDict, wordDict, model
 
-def scorePost(model, post):
+def scorePost(model, post, useBig = True):
     #words = re.findall("[\w']+", post[0])
     words = post
     wordsU = set(words)
     #wordsU = words
     score = 0.0
     for word in wordsU:
+        ww = word.split(' ')
+        if len(ww) == 2 and not(useBig):
+            continue
+        
         if not(model.has_key(word)) or model[word] <= 0.00001:
-            #print 'asdsa'
-            score = score +  1.0
+            score = score +  10 #TODO: penalty
         else:
             score = score +  (model[word] * -1 * math.log (model[word], 2)) 
     return score
 
-def analyzePPM():
-    data, bullyDict, wordDict, model = analyzeDict()
+def analyzePPM(useBig = True):
+    data, bullyDict, wordDict, model = analyzeDict(useBig)
     postsScore = list()
     for post,tag in data:
-        score = scorePost(model, post)
+        score = scorePost(model, post, useBig)
         postsScore.append([ score , tag, post ])
     postsScore = sorted(postsScore, key = lambda x: x[0] )
     return postsScore, model
         
-def printROC():
-    postsScore, model = analyzePPM()
+def printROC(useBig = True):
+    postsScore, model = analyzePPM(useBig)
     goodNess = 0
-    
+    falsesCnt = 0
     for i in xrange(len(postsScore)):
         tag = postsScore[i][1]
         score = postsScore[i][0]
         if tag == 'Y':
             goodNess = goodNess + 1
-        print '%2.2f - %2.2f(%d) - %2.5f' %(100.0*float(i+1) / len(postsScore), (100.0 * goodNess) /  39.0 , goodNess, score)
+        else:
+            falsesCnt = falsesCnt + 1
+        print '%2.2f - %2.2f(%d) - %2.5f' %(100.0*float(i+1) / (len(postsScore)), (100.0 * goodNess) /  39.0 , goodNess, score)
     return postsScore, model
     
 
@@ -130,6 +146,6 @@ def printDict():
         if ii == 100:
             break
 
-postsScore, model = printROC()
+postsScore, model = printROC(True)
 
     
