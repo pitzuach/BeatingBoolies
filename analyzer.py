@@ -4,6 +4,7 @@ class Analyzer:
     def __init__(self, penaltyTh=1.0, useBigram = False):
        self.data = None
        self.curr_data = None
+       self.test_data = None
        self.useBigram = useBigram
        self.penaltyTh = penaltyTh
 
@@ -12,7 +13,14 @@ class Analyzer:
             self.fetchData()
         self.curr_data = list(self.data)
         random.shuffle(self.curr_data)
-        self.curr_data = self.curr_data[0: int( math.ceil(len(self.curr_data) * perc))]
+
+        good_cl = filter(lambda p: p[1] == 'Y' , self.curr_data)
+        bad_cl = filter(lambda p: p[1] == 'N' , self.curr_data) 
+        train_data = good_cl[0: int( math.ceil(len(good_cl) * perc))]
+        train_data.extend( bad_cl[0: int( math.ceil(len(bad_cl) * perc))] )
+        self.test_data = good_cl[int( math.ceil(len(good_cl) * perc)):]
+        self.test_data.extend( bad_cl[int( math.ceil(len(bad_cl) * perc)):] )
+        self.curr_data = train_data
        
     def fetchData(self):
         if self.curr_data <> None:
@@ -98,7 +106,7 @@ class Analyzer:
         allW = map(lambda x:x[1], allW)
         
         tot = sum(allW)
-        print 'Total Sum =%d'%tot
+        #print 'Total Sum =%d'%tot
         for word,cnt in bullyDict.iteritems():
             #scoreDic[word] = float(cnt) / wordDict[word]
             #wc = 0
@@ -135,6 +143,8 @@ class Analyzer:
     def analyzePPM(self):
         data, bullyDict, wordDict, model = self.analyzeDict()
         postsScore = list()
+        if self.test_data <> None:
+            data = self.test_data
         for post,tag in data:
             score = self.scorePost(model, post)
             postsScore.append([ score , tag, post ])
@@ -157,12 +167,12 @@ class Analyzer:
                                                                          (100.0 * goodNess) /  float(tot_good) , goodNess, 100.0 * goodNess / float(goodNess + falsesCnt) ,score)
         return postsScore, model
 
-    def getResultsCrossedVal(self, numCross = 50):
+    def getResultsCrossedVal(self, perc = 0.7, numCross = 50, retVal = None):
         pScores = list()
         tot_good = None
         pSize = None
         for i in xrange(numCross):
-            self.prepareData()
+            self.prepareData(perc)
             postsScore, model = self.analyzePPM()
             pScores.append(postsScore)
             if tot_good == None:
@@ -172,6 +182,7 @@ class Analyzer:
         goodNessA = [0 for i in xrange(numCross)]
         falsesCntA = [0 for i in xrange(numCross)]
         scoresA = [0 for i in xrange(numCross)]
+        res = 0.0
         for i in xrange(pSize):
             for k in xrange(numCross):
                 postsScore = pScores[k]
@@ -191,8 +202,12 @@ class Analyzer:
             tmp = sorted(scoresA)
             #score = sum(scoresA) / float(numCross)
             score =  tmp[int(len(tmp)/2)]
-            print 'Progress=%2.2f, found=%2.2f(%d), MAP=%2.2f - %2.5f' %(100.0*float(i+1) / pSize, \
+            if retVal <> None and i == retVal:
+                res = goodNess
+            if retVal == None:
+                print 'Progress=%2.2f, found=%2.2f(%d), MAP=%2.2f - %2.5f' %(100.0*float(i+1) / pSize, \
                     (100.0 * goodNess) /  float(tot_good) , goodNess, 100.0 * goodNess / float(goodNess + falsesCnt) ,score)
+            return res
 
 
     def printDict(self):
@@ -205,8 +220,18 @@ class Analyzer:
                 break
 
 
-a = Analyzer(penaltyTh = 1.0,useBigram = False)
+a = Analyzer(penaltyTh = 0.1,useBigram = False)
 #postsScore, model = a.printROC()
-a.getResultsCrossedVal(10)
 
+mm = None
+mind = None
+for p in xrange(50):
+    a.penaltyTh = p/50.0
     
+    res = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = 3)
+    if mm == None or res > mm:
+        mm = res
+        mind = a.penaltyTh
+    print 'Running On %2.2f, Got %d'%(a.penaltyTh, res)
+
+print 'Best For %2.2f With %d'%(mind, mm)
