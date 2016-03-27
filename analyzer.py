@@ -183,6 +183,7 @@ class Analyzer:
         falsesCntA = [0 for i in xrange(numCross)]
         scoresA = [0 for i in xrange(numCross)]
         res = 0.0
+        resHist = list()
         for i in xrange(pSize):
             for k in xrange(numCross):
                 postsScore = pScores[k]
@@ -202,12 +203,16 @@ class Analyzer:
             tmp = sorted(scoresA)
             #score = sum(scoresA) / float(numCross)
             score =  tmp[int(len(tmp)/2)]
-            if retVal <> None and i == retVal:
+            if retVal <> None and i + 1 == retVal:
                 res = goodNess
+                tmp = sorted(goodNessA)
+                mmax = tmp[-1]
+                for l in xrange(mmax+1):
+                    resHist.append(  len(filter( lambda g : g == l ,tmp)) )
             if retVal == None:
                 print 'Progress=%2.2f, found=%2.2f(%d), MAP=%2.2f - %2.5f' %(100.0*float(i+1) / pSize, \
                     (100.0 * goodNess) /  float(tot_good) , goodNess, 100.0 * goodNess / float(goodNess + falsesCnt) ,score)
-        return res
+        return res, resHist
 
 
     def printDict(self):
@@ -225,14 +230,18 @@ a = Analyzer(penaltyTh = 0.1,useBigram = False)
 
 mm = None
 mind = None
-for p in xrange(50):
+for p in xrange(1,100):
     a.penaltyTh = p/100.0
     
-    res = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = 3)
-    #res = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = None)
+    res, resHist = a.getResultsCrossedVal(perc = 0.8, numCross = 100, retVal = 2)
+    #res, resHist = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = None)
     if mm == None or res > mm:
         mm = res
         mind = a.penaltyTh
-    print 'Running On %2.2f, Got %d'%(a.penaltyTh, res)
+    #resStr = ''
+    #for k in xrange(len(resHist):
+    #    resStr = resStr + '%d'%(resHist[k])
+    resStr = ', '.join(map(lambda d : str(d) ,resHist))
+    print 'Running On %2.2f, Got %d [%s]'%(a.penaltyTh, res, resStr)
 
 print 'Best For %2.2f With %d'%(mind, mm)
