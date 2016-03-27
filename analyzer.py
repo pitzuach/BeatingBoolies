@@ -207,7 +207,7 @@ class Analyzer:
             if retVal == None:
                 print 'Progress=%2.2f, found=%2.2f(%d), MAP=%2.2f - %2.5f' %(100.0*float(i+1) / pSize, \
                     (100.0 * goodNess) /  float(tot_good) , goodNess, 100.0 * goodNess / float(goodNess + falsesCnt) ,score)
-            return res
+        return res
 
 
     def printDict(self):
@@ -226,9 +226,10 @@ a = Analyzer(penaltyTh = 0.1,useBigram = False)
 mm = None
 mind = None
 for p in xrange(50):
-    a.penaltyTh = p/50.0
+    a.penaltyTh = p/100.0
     
     res = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = 3)
+    #res = a.getResultsCrossedVal(perc = 0.8, numCross = 10, retVal = None)
     if mm == None or res > mm:
         mm = res
         mind = a.penaltyTh
